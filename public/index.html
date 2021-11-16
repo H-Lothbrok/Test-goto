@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Display a map on a webpage</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css' rel='stylesheet' />
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.6.0/mapbox-gl.js"></script>
+<!-- <script src="./index.js"></script> -->
+<style>
+body { 
+    margin: 0; 
+    padding: 0;
+}
+#map { 
+    position: absolute; 
+    top: 0; 
+    bottom: 0; 
+    width: 100%; 
+}
+#menu {
+    margin-top: 2rem;
+position: absolute;
+background: #efefef;
+padding: 10px;
+font-family: 'Open Sans', sans-serif;
+}
+#button-pannel {
+    margin-top: 5rem;
+    position: absolute;
+    background: #efefef;
+}
+#info {
+display: table;
+position: relative;
+margin: 0px auto;
+word-wrap: anywhere;
+white-space: pre-wrap;
+padding: 10px;
+border: none;
+border-radius: 3px;
+font-size: 12px;
+text-align: center;
+color: #222;
+background: #fff;
+}
+.coordinates {
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    position: absolute;
+    bottom: 40px;
+    left: 10px;
+    padding: 5px 10px;
+    margin: 0;
+    font-size: 11px;
+    line-height: 18px;
+    border-radius: 3px;
+    display: none;
+}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="menu">
+    <input id="satellite-v9" type="radio" name="rtoggle" value="satellite" checked="checked">
+    <label for="satellite-v9">satellite</label>
+    
+    <input id="streets-v11" type="radio" name="rtoggle" value="streets">
+    <label for="streets-v11">streets</label>
+    
+    </div>
+    <!-- <pre id="info" ></pre> -->
+    <pre id="coordinates" class="coordinates"></pre>
+
+<div id= "button-pannel">
+    <form action="/arming" method="get">
+        <button type="submit">ARM</button>
+    </form>
+ 
+    <form action="/takeoff" method="get">
+        <button type="submit">Takeoff</button>
+    </form>
+    <form action="/goto" method="get">
+        <button type="submit">GOTO</button>
+    </form>
+    <form action="/rtl" method="get">
+        <button type="submit">RTL</button>
+    </form>
+</div>
+<script>
+    var marker_count = 0
+    var currentMarkers = []
+    mapboxgl.accessToken = 'pk.eyJ1IjoiaGFyZGlrLWFyb3JhIiwiYSI6ImNrdnVnYm8zdzJodGczMm1vOHZkMHA4ZmkifQ.s6hYZ9ckiYSKFVcpJYODvQ';
+    const coordinates = document.getElementById('coordinates')
+    var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/satellite-v9',
+    center: [73.7667,18.7765], // starting position [lng, lat]
+    zoom: 12,
+    });
+
+
+    // map.on('mousemove', (e) => {
+    //     document.getElementById('info').innerHTML =
+    //     // `e.point` is the x, y coordinates of the `mousemove` event
+    //     // relative to the top-left corner of the map.
+    //     // JSON.stringify(e.point) +
+    //     // '<br />' +
+    //     // `e.lngLat` is the longitude, latitude geographical position of the event.
+    //     JSON.stringify(e.lngLat.wrap());
+
+        
+    // });
+    map.on('click', (e) => {
+       
+        if (currentMarkers !== null){
+            for (var i = currentMarkers.length - 1; i >= 0; i--) {
+            currentMarkers[i].remove();
+            console.log(currentMarkers)
+            }
+        }
+
+        
+        document.getElementById('coordinates').innerHTML =
+        // `e.point` is the x, y coordinates of the `mousemove` event
+        // relative to the top-left corner of the map.
+        // JSON.stringify(e.point) +
+        // '<br />' +
+        // `e.lngLat` is the longitude, latitude geographical position of the event.
+        JSON.stringify(e.lngLat.wrap());
+
+
+        var oldLng = e.lngLat.lng
+        var oldLat = e.lngLat.lat
+
+        var marker1 = new mapboxgl.Marker({
+            draggable: true,
+            })
+        .setLngLat([e.lngLat.lng, e.lngLat.lat])
+        .addTo(map);
+        currentMarkers.push(marker1)
+        // console.log(currentMarkers)
+        // var altMark= marker1
+        // altMark.addTo(map)
+        
+        function onDragEnd() {
+
+            const lngLat = marker1.getLngLat();
+            coordinates.style.display = 'block';
+            coordinates.innerHTML = `Longitude: ${lngLat.lng}<br />Latitude: ${lngLat.lat}`;
+    }
+
+        marker1.on('dragend', onDragEnd);
+
+        // marker_count+=1
+    });    
+
+    const layerList = document.getElementById('menu');
+    const inputs= layerList.getElementsByTagName('input');
+
+    for (const input of inputs){
+        input.onclick= (layer)=>{
+            const layerID = layer.target.id
+            map.setStyle('mapbox://styles/mapbox/'+ layerID)
+        }
+    }
+</script> 
+
+</body>
+</html>
